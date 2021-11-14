@@ -1,4 +1,3 @@
-absl-py @ file:///home/conda/feedstock_root/build_artifacts/absl-py_1615404881292/work
 aiohttp @ file:///Users/runner/miniforge3/conda-bld/aiohttp_1614280980210/work
 altair==4.1.0
 appnope @ file:///Users/runner/miniforge3/conda-bld/appnope_1610094717693/work
