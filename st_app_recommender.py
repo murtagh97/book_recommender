@@ -107,19 +107,18 @@ def create_model(wide_sparse):
 def book_recommendation(df, wide_df, model):
 
         ### Row 1
-        row_11, _, row_12, = st.beta_columns( (2, 1.5, 1) )
+        row_11, _ = st.columns( (1, 0.001)  )
         
         row_11.title('Book Recommender System :books:')
-        row_12.subheader('A Web App by [Julius Rabek](https://github.com/murtagh97)')
+        row_11.write('A Web App by [Julius Rabek](https://github.com/murtagh97)')
         
         ### Row s1
-        row_s1, _ = st.beta_columns( (2, 1) )
+        row_s1, _ = st.columns( (2, 1) )
         
-        row_s1.write('')
         row_s1.write('')
 
         ### Row 2
-        row_21, _ = st.beta_columns( (1, 0.001) )
+        row_21, _ = st.columns( (1, 0.001) )
         
         df_unique = df.drop_duplicates(
                 subset = 'book_title', keep="first"
@@ -136,7 +135,7 @@ def book_recommendation(df, wide_df, model):
         row_21.subheader('Book Info')
 
         ### Row 3
-        row_31, _, row_33, _ = st.beta_columns( (1, 0.75, 1.5, 1) )
+        row_31, _, row_33, _ = st.columns( (1, 0.75, 1.5, 1) )
 
         title = df_unique['book_title'].loc[ df_unique['book_title'] == option ].item()
         isbn = df_unique['isbn_unique'].loc[ df_unique['book_title'] == option ].item()
@@ -164,7 +163,7 @@ def book_recommendation(df, wide_df, model):
             )
 
         ### Row 4
-        row_41, _ = st.beta_columns( (1, 0.001) )
+        row_41, _ = st.columns( (1, 0.001) )
         row_41.subheader('Recommendations')
 
 
@@ -199,7 +198,7 @@ def book_recommendation(df, wide_df, model):
                     )
     
         ### Row 5
-        row_51, row_52, row_53, row_54, row_55 = st.beta_columns( (1, 1, 1, 1, 1) )
+        row_51, row_52, row_53, row_54, row_55 = st.columns( (1, 1, 1, 1, 1) )
         
         row_51.image(
                 Image.open(requests.get(url_list[0], stream=True).raw),
@@ -267,11 +266,11 @@ def book_recommendation(df, wide_df, model):
             )
 
         ### Row s2
-        row_s2, _ = st.beta_columns( (1, 0.001) )
+        row_s2, _ = st.columns( (1, 0.001) )
         row_s2.write('')
         row_s2.write('')
         
-        exp_info = row_s2.beta_expander('About/App Info')
+        exp_info = row_s2.expander('About/App Info')
         exp_info.markdown(
                 """
                 by Július Rábek  \n
@@ -293,20 +292,20 @@ def book_recommendation(df, wide_df, model):
         
 def analysis(main_df, book_info, user_info):
         
-        row_11, _, row_12, = st.beta_columns( (2, 1.5, 1) )
-        
+        row_11, _ = st.columns( (1, 0.001)  )
         row_11.title('Book Crossing Data :books:')
-        row_12.subheader('A Web App by [Julius Rabek](https://github.com/murtagh97)')
+        row_11.write('A Web App by [Julius Rabek](https://github.com/murtagh97)')
 
-        row_s1, _ = st.beta_columns( (2, 1) )
-        row_s1.write('')
+        # row_s1, _ = st.columns( (2, 1) )
+        # row_s1.write('')
 
         ### User Part ###
-        row_31, _, row_33 = st.beta_columns( (1, 0.1, 1) )
+        row_u1, _, row_u3 = st.columns( (1, 0.1, 1) )
 
-        row_31.header('Analyzing User Info :bust_in_silhouette:')
-        row_33.header('')
+        row_u1.header('Analyzing User Info :bust_in_silhouette:')
+        row_u3.header('')
 
+        row_31, _, row_33 = st.columns( (1, 0.1, 1) )
         row_31.subheader("User Age Distribution")
         fig = Figure(figsize = (7.1,7))
         ax = fig.subplots()
@@ -332,7 +331,7 @@ def analysis(main_df, book_info, user_info):
         ax.grid(zorder=0,alpha=.2)
         row_33.pyplot(fig)
 
-        row_41, _, row_43 = st.beta_columns( (1, 0.1, 1) )
+        row_41, _, row_43 = st.columns( (1, 0.1, 1) )
         row_41.subheader("Most Frequent User Cities")
         fig = Figure(figsize = (7.2,7))
         ax = fig.subplots()
@@ -359,7 +358,7 @@ def analysis(main_df, book_info, user_info):
         ax.grid(zorder=0,alpha=.2)
         row_43.pyplot(fig)
 
-        _, row_52, _ = st.beta_columns( (0.4, 1, 0.4) )
+        _, row_52, _ = st.columns( (0.4, 1, 0.4) )
         row_52.subheader("Most Frequent User Countries")
         fig = Figure(figsize = (7,7))
         ax = fig.subplots()
@@ -374,12 +373,12 @@ def analysis(main_df, book_info, user_info):
         row_52.pyplot(fig)
 
         ### Book Data Part ###
-        row_61, _, row_63 = st.beta_columns( (1, 0.1, 1) )
+        row_61, _, row_63 = st.columns( (1, 0.1, 1) )
 
         row_61.header('Analyzing Book Info :open_book:')
         row_63.header('')
 
-        row_71, _, row_73 = st.beta_columns( (1, 0.1, 1) )
+        row_71, _, row_73 = st.columns( (1, 0.1, 1) )
         row_71.subheader("Book Rating Distribution")
         fig = Figure(figsize = (7.1,7))
         ax = fig.subplots()
@@ -409,7 +408,7 @@ def analysis(main_df, book_info, user_info):
         ax.grid(zorder=0,alpha=.2)
         row_73.pyplot(fig)
 
-        row_81, _, row_83 = st.beta_columns( (1, 0.1, 1) )
+        row_81, _, row_83 = st.columns( (1, 0.1, 1) )
         row_81.subheader("Most Rated Books")
         fig = Figure(figsize = (4.6,7))
         ax = fig.subplots()
@@ -442,7 +441,7 @@ def analysis(main_df, book_info, user_info):
         ax.grid(zorder=0,alpha=.2)
         row_83.pyplot(fig)
 
-        row_91, _, row_93 = st.beta_columns( (1, 0.1, 1) )
+        row_91, _, row_93 = st.columns( (1, 0.1, 1) )
         row_91.subheader("Most Rated Authors")
         fig = Figure(figsize = (6.5,7))
         ax = fig.subplots()
@@ -473,7 +472,7 @@ def analysis(main_df, book_info, user_info):
         ax.grid(zorder=0,alpha=.2)
         row_93.pyplot(fig)
 
-        row_101, _, row_103 = st.beta_columns( (1, 0.1, 1) )
+        row_101, _, row_103 = st.columns( (1, 0.1, 1) )
         row_101.subheader("Most Rated Publishers")
         fig = Figure(figsize = (6.5,7))
         ax = fig.subplots()
