@@ -166,7 +166,6 @@ def book_recommendation(df, wide_df, model):
         row_41, _ = st.columns( (1, 0.001) )
         row_41.subheader('Recommendations')
 
-
         best_match_index = wide_df.index.tolist().index(isbn)
 
         _, recommendations = model.kneighbors(
@@ -272,20 +271,12 @@ def book_recommendation(df, wide_df, model):
         
         exp_info = row_s2.expander('About/App Info')
         exp_info.markdown(
-                """
-                by Július Rábek  \n
-                <a href="https://github.com/murtagh97/segmentator_unet" target="_blank">GitHub</a> <a href="https://www.linkedin.com/in/julius-rabek/" target="_blank">LinkedIn</a>
-                
-                This app examines the use of <a href="https://arxiv.org/abs/1505.04597" target="_blank">UNet</a> model to segment the 
-                lung fields from a set of front view chest X-rays given in the <a href="https://www.isi.uu.nl/Research/Databases/SCR/" target="_blank">SCR dataset</a>.
+                """                
+                This app offers a simple book recommendation engine built with the use of the <a href="http://www2.informatik.uni-freiburg.de/~cziegler/BX/" target="_blank">Book-Crossing Dataset</a>.
 
                 Individual app sections allow user to: 
-                * See the details of the final model and the underlying dataset,
-                * Display the training procedure and the model results on the respective datasets,
-                * Upload an image and try different data augmentation methods,
-                * Upload an image and predict the resulting segmentation.
-                
-                Feel free to reach out if you have any feedback or suggestions!
+                * Select a book and create some recommendations.
+                * See data visualisation with exploratory data analysis of the underlying dataset.
                 """,
                 unsafe_allow_html=True
             )
@@ -295,9 +286,6 @@ def analysis(main_df, book_info, user_info):
         row_11, _ = st.columns( (1, 0.001)  )
         row_11.title('Book Crossing Data :books:')
         row_11.write('A Web App by [Julius Rabek](https://github.com/murtagh97)')
-
-        # row_s1, _ = st.columns( (2, 1) )
-        # row_s1.write('')
 
         ### User Part ###
         row_u1, _, row_u3 = st.columns( (1, 0.1, 1) )
@@ -316,61 +304,92 @@ def analysis(main_df, book_info, user_info):
         ax.set_ylabel('Count')
         ax.grid(zorder=0,alpha=.2)
         row_31.pyplot(fig)
+        desc_stats = [user_info['age'].mean(), user_info['age'].median(), user_info['age'].max()]
+        exp = row_31.expander('User Age')
+        exp.markdown(
+                f'The mean age of the users is _{desc_stats[0].round(2)}_, with the median age being _{desc_stats[1]}_. The cutoff values for minimal and maximal age has been set at _{5}_ and _{115}_ years.',
+                unsafe_allow_html=True
+        )
 
         row_33.subheader("Most Active Users")
         fig = Figure(figsize = (7,7))
         ax = fig.subplots()
-        ds = main_df['user_id'].astype(str).value_counts().reset_index().head(25)
+        ds = main_df['user_id'].astype(str).value_counts().reset_index()
         ds.columns = ['value', 'count']
         ds['value'] = 'U' + ds['value']
         sns.barplot(
-                data = ds , x = 'count', y = 'value', ax=ax, palette='Reds_r'
+                data = ds.head(25) , x = 'count', y = 'value', ax=ax, palette='Reds_r'
             )
         ax.set_xlabel('Number of Books Rated')
         ax.set_ylabel('User ID')
         ax.grid(zorder=0,alpha=.2)
         row_33.pyplot(fig)
+        desc_stats = [ds['count'].count(), ds['count'].mean(), ds['count'].max()]
+        exp = row_33.expander('User Activity')
+        exp.markdown(
+                f'In total, _{desc_stats[0]}_ users have rated at least one book. One user has rated _{desc_stats[1].round(2)}_ books in average, while the most active user has reviewed _{desc_stats[2]}_ books!',
+                unsafe_allow_html=True
+        )
 
         row_41, _, row_43 = st.columns( (1, 0.1, 1) )
         row_41.subheader("Most Frequent User Cities")
         fig = Figure(figsize = (7.2,7))
         ax = fig.subplots()
-        ds = user_info['city'].value_counts().reset_index().head(20)
+        ds = user_info['city'].value_counts().reset_index()
         ds.columns = ['value', 'count']
         sns.barplot(
-                data = ds, x = 'count', y = 'value', ax=ax, palette='Greens_r'
+                data = ds.head(20), x = 'count', y = 'value', ax=ax, palette='Greens_r'
             )
         ax.set_xlabel('Number of Books Rated')
         ax.set_ylabel('City')
         ax.grid(zorder=0,alpha=.2)
         row_41.pyplot(fig)
+        desc_stats = ds['count'].head(3)
+        exp = row_41.expander('User Location: Cities')
+        exp.markdown(
+                f'The three most frequent cities are _London_ with _{desc_stats[0]}_ users, _Barcelona_ with _{desc_stats[1]}_ users and _Toronto_ with _{desc_stats[2]}_ users.',
+                unsafe_allow_html=True
+        )
 
         row_43.subheader("Most Frequent User States")
         fig = Figure(figsize = (7,7))
         ax = fig.subplots()
-        ds = user_info['state'].value_counts().reset_index().head(15)
+        ds = user_info['state'].value_counts().reset_index()
         ds.columns = ['value', 'count']
         sns.barplot(
-                data = ds, x = 'count', y = 'value', ax=ax, palette='Reds_r'
+                data = ds.head(15), x = 'count', y = 'value', ax=ax, palette='Reds_r'
             )
         ax.set_xlabel('Number of Books Rated')
         ax.set_ylabel('State')
         ax.grid(zorder=0,alpha=.2)
         row_43.pyplot(fig)
+        desc_stats = ds['count'].head(3)
+        exp = row_43.expander('User Location: States')
+        exp.markdown(
+                f'The most frequently listed states are _California_ with _{desc_stats[0]}_ users and _England_ with _{desc_stats[2]}_ users. On the other hand, _{desc_stats[1]}_ users have not further specified which state do they come from.',
+                unsafe_allow_html=True
+        )
 
         _, row_52, _ = st.columns( (0.4, 1, 0.4) )
         row_52.subheader("Most Frequent User Countries")
         fig = Figure(figsize = (7,7))
         ax = fig.subplots()
-        ds = user_info['country'].value_counts().reset_index().head(15)
+        ds = user_info['country'].value_counts().reset_index()
         ds.columns = ['value', 'count']
         sns.barplot(
-                data = ds, x = 'count', y = 'value', ax=ax, palette='Greens_r'
+                data = ds.head(15), x = 'count', y = 'value', ax=ax, palette='Greens_r'
             )
         ax.set_xlabel('Number of Books Rated')
         ax.set_ylabel('Country')
         ax.grid(zorder=0,alpha=.2)
         row_52.pyplot(fig)
+        num = ds['count'].head(3).sum() + ds['count'][6] + ds['count'][9]
+        en_percentage = ( num / ds['count'].sum() ) * 100
+        exp = row_52.expander('User Location: Countries')
+        exp.markdown(
+                f'Around _{en_percentage.round(2)}_% of the users come from the English speaking countries such as _USA_, _Canada_, _UK_ and _Australia_. The remaining users mostly come from the mainland Europe.',
+                unsafe_allow_html=True
+        )
 
         ### Book Data Part ###
         row_61, _, row_63 = st.columns( (1, 0.1, 1) )
@@ -391,22 +410,35 @@ def analysis(main_df, book_info, user_info):
         ax.set_ylabel('Book Rating')
         ax.grid(zorder=0,alpha=.2)
         row_71.pyplot(fig)
+        desc_stats = [main_df['book_rating'].mean(), main_df['book_rating'].median()]
+        exp = row_71.expander('Book Ratings')
+        exp.markdown(
+                f'On the scale from _1_ to _10_, the mean and the median book ratings are _{desc_stats[0].round(2)}_ and _{desc_stats[1]}_.',
+                unsafe_allow_html=True
+        )
 
         # ds = book_info.drop_duplicates(
         #         subset = 'isbn_unique', keep="first"
         #     )
-        ds = book_info['publication_year'].astype(str).value_counts().reset_index().head(20)
+        ds = book_info['publication_year'].astype(str).value_counts().reset_index()
         ds.columns = ['value', 'count']
         row_73.subheader("Most Frequent Years of Publication")
         fig = Figure(figsize = (7,7))
         ax = fig.subplots()
         sns.barplot(
-                data = ds, x = 'count', y = 'value', ax=ax, palette='Reds_r'
+                data = ds.head(20), x = 'count', y = 'value', ax=ax, palette='Reds_r'
             )
         ax.set_xlabel('Number of Books')
         ax.set_ylabel('Publication Year')
         ax.grid(zorder=0,alpha=.2)
         row_73.pyplot(fig)
+        num = ds['count'].head(20).sum()
+        year_percentage = ( num / ds['count'].sum() ) * 100
+        exp = row_73.expander('Publication Years')
+        exp.markdown(
+                f'The oldest book in the database was published in _1806_, while the latest books were published in _2004_ . Around _{year_percentage.round(2)}_% of the books were published in _1985 or later_ .',
+                unsafe_allow_html=True
+        )
 
         row_81, _, row_83 = st.columns( (1, 0.1, 1) )
         row_81.subheader("Most Rated Books")
@@ -423,6 +455,11 @@ def analysis(main_df, book_info, user_info):
         ax.set_ylabel('Book')
         ax.grid(zorder=0,alpha=.2)
         row_81.pyplot(fig)
+        exp = row_81.expander('Books: Quantity')
+        exp.markdown(
+                f'The three most rated books are the following. _{ds.book_title.iloc[0]}_, written by _{ds.book_author.iloc[0]}_, with _{ds.n_book_ratings.iloc[0]}_ ratings. _{ds.book_title.iloc[1]}_, written by _{ds.book_author.iloc[1]}_, with _{ds.n_book_ratings.iloc[1]}_ ratings. _{ds.book_title.iloc[2]}_, written by _{ds.book_author.iloc[2]}_, with _{ds.n_book_ratings.iloc[2]}_ ratings. In average, one book is rated _{ds.n_book_ratings.mean().round(2)}_ times.',
+                unsafe_allow_html=True
+        )
 
         row_83.subheader("Best Rated Popular Books")
         fig = Figure(figsize = (5,7))
@@ -440,20 +477,30 @@ def analysis(main_df, book_info, user_info):
         ax.set(xlim=(1, 10))
         ax.grid(zorder=0,alpha=.2)
         row_83.pyplot(fig)
+        exp = row_83.expander('Books: Quality')
+        exp.markdown(
+                f'The best rated popular book is _{ds.book_title.iloc[0]}_, written by _{ds.book_author.iloc[0]}_, with an average rating of _{ds.average_rating.iloc[0]}_. On the other hand, the worst rated popular book is _{ds.book_title.iloc[-1]}_, written by _{ds.book_author.iloc[-1]}_, with an average rating of _{ds.average_rating.iloc[-1]}_. Popular books being the books with at least 50 ratings.',
+                unsafe_allow_html=True
+        )
 
         row_91, _, row_93 = st.columns( (1, 0.1, 1) )
         row_91.subheader("Most Rated Authors")
         fig = Figure(figsize = (6.5,7))
         ax = fig.subplots()
-        ds = main_df['book_author'].value_counts().reset_index().head(15)
-        ds.columns = ['value', 'count']
+        ds = main_df['book_author'].value_counts().reset_index()
+        ds.columns = ['value', 'n_ratings']
         sns.barplot(
-                data = ds, x = 'count', y = 'value', ax=ax, palette='Greens_r'
+                data = ds.head(15), x = 'n_ratings', y = 'value', ax=ax, palette='Greens_r'
             )
         ax.set_xlabel('Number of Ratings')
         ax.set_ylabel('Author')
         ax.grid(zorder=0,alpha=.2)
         row_91.pyplot(fig)
+        exp = row_91.expander('Authors: Quantity')
+        exp.markdown(
+                f'The three most rated authors are _{ds.value.iloc[0]}_ with _{ds.n_ratings.iloc[0]}_ ratings, _{ds.value.iloc[1]}_ with _{ds.n_ratings.iloc[1]}_ ratings, and _{ds.value.iloc[2]}_ with _{ds.n_ratings.iloc[2]}_ ratings . In average, one author is rated _{ds.n_ratings.mean().round(2)}_ times.',
+                unsafe_allow_html=True
+        )
 
         row_93.subheader("Best Rated Popular Authors")
         fig = Figure(figsize = (6.25,7))
@@ -471,33 +518,71 @@ def analysis(main_df, book_info, user_info):
         ax.set_ylabel('Author')
         ax.grid(zorder=0,alpha=.2)
         row_93.pyplot(fig)
+        exp = row_93.expander('Authors: Quality')
+        exp.markdown(
+                f'The best rated popular author is _{ds.book_author.iloc[0]}_ with an average rating of _{ds.book_rating.iloc[0].round(2)}_. On the other hand, the worst rated popular author is _{ds.book_author.iloc[-1]}_ with an average rating of _{ds.book_rating.iloc[-1].round(2)}_. Popular authors being the authors with at least 100 ratings.',
+                unsafe_allow_html=True
+        )
 
         row_101, _, row_103 = st.columns( (1, 0.1, 1) )
         row_101.subheader("Most Rated Publishers")
         fig = Figure(figsize = (6.5,7))
         ax = fig.subplots()
-        ds = main_df['publisher'].value_counts().reset_index().head(15)
-        ds.columns = ['value', 'count']
+        ds = main_df['publisher'].value_counts().reset_index()
+        ds.columns = ['value', 'n_ratings']
         sns.barplot(
-                data = ds, x = 'count', y = 'value', ax=ax, palette='Greens_r'
+                data = ds.head(15), x = 'n_ratings', y = 'value', ax=ax, palette='Greens_r'
             )
         ax.set_xlabel('Number of Ratings')
         ax.set_ylabel('Publisher')
         ax.grid(zorder=0,alpha=.2)
         row_101.pyplot(fig)
+        exp = row_101.expander('Publishers: Quantity')
+        exp.markdown(
+                f'The three most rated publishers are _{ds.value.iloc[0]}_ with _{ds.n_ratings.iloc[0]}_ ratings, _{ds.value.iloc[1]}_ with _{ds.n_ratings.iloc[1]}_ ratings, and _{ds.value.iloc[2]}_ with _{ds.n_ratings.iloc[2]}_ ratings . In average, one publisher is rated _{ds.n_ratings.mean().round(2)}_ times.',
+                unsafe_allow_html=True
+        )
 
-        row_103.subheader("Authors with Most Books Published")
-        fig = Figure(figsize = (6.8,7))
+        row_103.subheader("Best Rated Popular Publishers")
+        fig = Figure(figsize = (6.15,7))
         ax = fig.subplots()
-        ds = book_info['book_author'].value_counts().reset_index().head(15)
-        ds.columns = ['value', 'count']
+        ds = main_df['publisher'].value_counts().reset_index()
+        ds.columns = ['publisher', 'author_evaluation_count']
+        ds = pd.merge(main_df, ds, on='publisher')
+        ds = ds[ds['author_evaluation_count'] > 150]
+        ds = ds.groupby('publisher')['book_rating'].mean().reset_index().sort_values('book_rating', ascending = False)
+        ds = ds[~ds['publisher'].str.contains("J.R.R.")]
         sns.barplot(
-                data = ds, x = 'count', y = 'value', ax=ax, palette='Reds_r'
+                data = ds.head(15), x = 'book_rating', y = 'publisher', ax=ax, palette='Reds_r'
+            )
+        ax.set_xlabel('Average Rating')
+        ax.set_ylabel('Publisher')
+        ax.grid(zorder=0,alpha=.2)
+        row_103.pyplot(fig)
+        exp = row_103.expander('Publishers: Quality')
+        exp.markdown(
+                f'The best rated popular publisher is _{ds.publisher.iloc[0]}_ with an average rating of _{ds.book_rating.iloc[0].round(2)}_. On the other hand, the worst rated popular publisher is _{ds.publisher.iloc[-1]}_ with an average rating of _{ds.book_rating.iloc[-1].round(2)}_. Popular publishers being the publishers with at least 150 ratings.',
+                unsafe_allow_html=True
+        )
+
+        _, row_112, _ = st.columns( (0.4, 1, 0.4) )
+        row_112.subheader("Authors with Most Books Published")
+        fig = Figure(figsize = (7.5,7))
+        ax = fig.subplots()
+        ds = book_info['book_author'].value_counts().reset_index()
+        ds.columns = ['value', 'n_ratings']
+        sns.barplot(
+                data = ds.head(15), x = 'n_ratings', y = 'value', ax=ax, palette='Greens_r'
             )
         ax.set_xlabel('Number of Books')
         ax.set_ylabel('Author')
         ax.grid(zorder=0,alpha=.2)
-        row_103.pyplot(fig)
+        row_112.pyplot(fig)
+        exp = row_112.expander('Author Productivity')
+        exp.markdown(
+                f'''Three authors with the most books published are the following. _{ds.value.iloc[0]}_ with _{ds.n_ratings.iloc[0]}_ books, _{ds.value.iloc[1]}_ with _{ds.n_ratings.iloc[1]}_ books, and _{ds.value.iloc[2]}_ with _{ds.n_ratings.iloc[2]}_ books . In average, one author has _{ds.n_ratings.mean().round(2)}_  books published.''',
+                unsafe_allow_html=True
+        )
 
 if __name__ == "__main__":
 
