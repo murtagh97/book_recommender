@@ -74,8 +74,8 @@ def load_data(arg_df = 'explicit'):
         n_ratings.rename(columns={'book_rating': 'n_book_ratings'}, inplace=True)
         main_df = main_df.merge(n_ratings, on='isbn_unique')
 
-        # only keep books that have been rated at least certain amount of times
-        main_df = main_df[main_df['n_book_ratings'] >= 35]
+        # only keep books that have been rated at least certain amount of times (top 25% - third quartile - 32 OR mean - 36)
+        main_df = main_df[main_df['n_book_ratings'] >= 32]
 
         return main_df, book_info, user_info, user_rating_info
 
@@ -402,6 +402,8 @@ def analysis(main_df, book_info, user_info, user_rating_info):
         ### Book Part ###
         #################
         # analysing only the explicit part of the dataset
+        # mean quantity analyses are already made on the filtered dataset
+        
         row_61, _, row_63 = st.columns( (1, 0.1, 1) )
 
         row_61.header('Analyzing Book Info :open_book:')
