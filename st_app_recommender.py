@@ -22,7 +22,7 @@ def main():
                 initial_sidebar_state='expanded'
             )
 
-        main_df, book_info, user_info = load_data()
+        main_df, book_info, user_info, user_rating_info = load_data()
 
         wide_df, wide_df_sparse = create_wide_df(main_df)
 
@@ -30,16 +30,16 @@ def main():
 
         selected_box = st.sidebar.selectbox(
                 'Select Section',
-                ('Main', 'Book Crossing Data')
+                ('Main', 'Book-Crossing Data')
             )
         
         if selected_box == 'Main':
 
                 book_recommendation(main_df, wide_df, model_knn)
 
-        if selected_box == 'Book Crossing Data': 
+        if selected_box == 'Book-Crossing Data': 
 
-                analysis(main_df, book_info, user_info) 
+                analysis(main_df, book_info, user_info, user_rating_info) 
 
 @st.cache(suppress_st_warning=True, allow_output_mutation=True)
 def load_data(arg_df = 'explicit'):
@@ -48,6 +48,11 @@ def load_data(arg_df = 'explicit'):
         user_info = pd.read_csv(os.getcwd() + '/data/user_info.csv')
         rating_info = pd.read_csv(os.getcwd() + '/data/rating_info.csv')
 
+        # user_rating df for visualisation purposes, keep only users with explicit ratings
+        user_rating_info = pd.merge(rating_info, user_info, on=['user_id'])
+        user_rating_info = user_rating_info[ (user_rating_info['book_rating'] != 0) ]
+
+        # main df
         main_df = pd.merge(rating_info, book_info, on=['isbn'])
         main_df = pd.merge(main_df, user_info, on=['user_id'])
 
@@ -72,7 +77,7 @@ def load_data(arg_df = 'explicit'):
         # only keep books that have been rated at least certain amount of times
         main_df = main_df[main_df['n_book_ratings'] >= 35]
 
-        return main_df, book_info, user_info
+        return main_df, book_info, user_info, user_rating_info
 
 @st.cache(suppress_st_warning=True, allow_output_mutation=True)
 def create_wide_df(main_df):
@@ -281,13 +286,17 @@ def book_recommendation(df, wide_df, model):
                 unsafe_allow_html=True
             )
         
-def analysis(main_df, book_info, user_info):
+def analysis(main_df, book_info, user_info, user_rating_info):
         
         row_11, _ = st.columns( (1, 0.001)  )
-        row_11.title('Book Crossing Data :books:')
+        row_11.title('Book-Crossing Data :books:')
         row_11.write('A Web App by [Julius Rabek](https://github.com/murtagh97)')
-
+        
+        #################
         ### User Part ###
+        #################
+        # analysing only the users that have rated books explicitly, i.e., the explicit part of the dataset
+
         row_u1, _, row_u3 = st.columns( (1, 0.1, 1) )
 
         row_u1.header('Analyzing User Info :bust_in_silhouette:')
@@ -298,75 +307,73 @@ def analysis(main_df, book_info, user_info):
         fig = Figure(figsize = (7.1,7))
         ax = fig.subplots()
         sns.histplot(
-                data = user_info['age'], color = '#0c5529', ax=ax, binwidth=2, kde=False
+                data = user_rating_info['age'], color = '#0c5529', ax=ax, binwidth=2, kde=False
             )
         ax.set_xlabel('User Age')
         ax.set_ylabel('Count')
         ax.grid(zorder=0,alpha=.2)
         row_31.pyplot(fig)
-        desc_stats = [user_info['age'].mean(), user_info['age'].median(), user_info['age'].max()]
         exp = row_31.expander('User Age')
         exp.markdown(
-                f'The mean age of the users is _{desc_stats[0].round(2)}_, with the median age being _{desc_stats[1]}_. The cutoff values for minimal and maximal age has been set at _{5}_ and _{115}_ years.',
+                f'The mean age of the users is _{user_rating_info.age.mean().round(2)}_, with the median age being _{user_rating_info.age.median()}_. The cutoff values for minimal and maximal age has been set at _{5}_ and _{115}_ years.',
                 unsafe_allow_html=True
         )
 
         row_33.subheader("Most Active Users")
         fig = Figure(figsize = (7,7))
         ax = fig.subplots()
-        ds = main_df['user_id'].astype(str).value_counts().reset_index()
-        ds.columns = ['value', 'count']
+        # ds = main_df['user_id'].astype(str).value_counts().reset_index()
+        ds = user_rating_info['user_id'].astype(str).value_counts().reset_index()
+        ds.columns = ['value', 'counts']
         ds['value'] = 'U' + ds['value']
         sns.barplot(
-                data = ds.head(25) , x = 'count', y = 'value', ax=ax, palette='Reds_r'
+                data = ds.head(25) , x = 'counts', y = 'value', ax=ax, palette='Reds_r'
             )
         ax.set_xlabel('Number of Books Rated')
         ax.set_ylabel('User ID')
         ax.grid(zorder=0,alpha=.2)
         row_33.pyplot(fig)
-        desc_stats = [ds['count'].count(), ds['count'].mean(), ds['count'].max()]
         exp = row_33.expander('User Activity')
         exp.markdown(
-                f'In total, _{desc_stats[0]}_ users have rated at least one book. One user has rated _{desc_stats[1].round(2)}_ books in average, while the most active user has reviewed _{desc_stats[2]}_ books!',
+                f'In total, _{ds.counts.count()}_ users have rated at least one book. One user has rated _{ds.counts.mean().round(2)}_ books in average, while the most active user has reviewed _{ds.counts.max()}_ books!',
                 unsafe_allow_html=True
         )
 
         row_41, _, row_43 = st.columns( (1, 0.1, 1) )
         row_41.subheader("Most Frequent User Cities")
-        fig = Figure(figsize = (7.2,7))
+        fig = Figure(figsize = (7,7))
         ax = fig.subplots()
-        ds = user_info['city'].value_counts().reset_index()
-        ds.columns = ['value', 'count']
+        ds = user_rating_info['city'].value_counts().reset_index()
+        ds.columns = ['value', 'counts']
         sns.barplot(
-                data = ds.head(20), x = 'count', y = 'value', ax=ax, palette='Greens_r'
+                data = ds.head(20), x = 'counts', y = 'value', ax=ax, palette='Greens_r'
             )
         ax.set_xlabel('Number of Books Rated')
         ax.set_ylabel('City')
         ax.grid(zorder=0,alpha=.2)
         row_41.pyplot(fig)
-        desc_stats = ds['count'].head(3)
+        desc_stats = ds['counts'].head(3)
         exp = row_41.expander('User Location: Cities')
         exp.markdown(
-                f'The three most frequent cities are _London_ with _{desc_stats[0]}_ users, _Barcelona_ with _{desc_stats[1]}_ users and _Toronto_ with _{desc_stats[2]}_ users.',
+                f'The three most frequent cities are _{ds.value.iloc[0]}_ with _{ds.counts.iloc[0]}_ users, _{ds.value.iloc[1]}_ with _{ds.counts.iloc[1]}_ users and _{ds.value.iloc[2]}_ with _{ds.counts.iloc[1]}_ users.',
                 unsafe_allow_html=True
         )
 
         row_43.subheader("Most Frequent User States")
-        fig = Figure(figsize = (7,7))
+        fig = Figure(figsize = (6.9,7))
         ax = fig.subplots()
-        ds = user_info['state'].value_counts().reset_index()
-        ds.columns = ['value', 'count']
+        ds = user_rating_info['state'].value_counts().reset_index()
+        ds.columns = ['value', 'counts']
         sns.barplot(
-                data = ds.head(15), x = 'count', y = 'value', ax=ax, palette='Reds_r'
+                data = ds.head(20), x = 'counts', y = 'value', ax=ax, palette='Reds_r'
             )
         ax.set_xlabel('Number of Books Rated')
         ax.set_ylabel('State')
         ax.grid(zorder=0,alpha=.2)
         row_43.pyplot(fig)
-        desc_stats = ds['count'].head(3)
         exp = row_43.expander('User Location: States')
         exp.markdown(
-                f'The most frequently listed states are _California_ with _{desc_stats[0]}_ users and _England_ with _{desc_stats[2]}_ users. On the other hand, _{desc_stats[1]}_ users have not further specified which state do they come from.',
+                f'The most frequently listed states are _{ds.value.iloc[0]}_ with _{ds.counts.iloc[0]}_ users and _{ds.value.iloc[1]}_ with _{ds.counts.iloc[1]}_ users. On the other hand, around _{ds.counts.iloc[4] + ds.counts.iloc[11] }_ users have not further specified which state do they come from.',
                 unsafe_allow_html=True
         )
 
@@ -374,24 +381,27 @@ def analysis(main_df, book_info, user_info):
         row_52.subheader("Most Frequent User Countries")
         fig = Figure(figsize = (7,7))
         ax = fig.subplots()
-        ds = user_info['country'].value_counts().reset_index()
-        ds.columns = ['value', 'count']
+        ds = user_rating_info['country'].value_counts().reset_index()
+        ds.columns = ['value', 'counts']
         sns.barplot(
-                data = ds.head(15), x = 'count', y = 'value', ax=ax, palette='Greens_r'
+                data = ds.head(15), x = 'counts', y = 'value', ax=ax, palette='Greens_r'
             )
         ax.set_xlabel('Number of Books Rated')
         ax.set_ylabel('Country')
         ax.grid(zorder=0,alpha=.2)
         row_52.pyplot(fig)
-        num = ds['count'].head(3).sum() + ds['count'][6] + ds['count'][9]
-        en_percentage = ( num / ds['count'].sum() ) * 100
+        num = ds.counts.head(3).sum() + ds.counts[5] + ds.counts[13]
+        en_percentage = ( num / ds.counts.sum() ) * 100
         exp = row_52.expander('User Location: Countries')
         exp.markdown(
-                f'Around _{en_percentage.round(2)}_% of the users come from the English speaking countries such as _USA_, _Canada_, _UK_ and _Australia_. The remaining users mostly come from the mainland Europe.',
+                f'Around _{en_percentage.round(2)}_% of the users come from the English speaking countries, i.e., _{ds.value[0]}_, _{ds.value[1]}_, _{ds.value[2]}_, _{ds.value[5]}_, and _{ds.value[13]}_. The remaining users mostly come from the mainland Europe, while _{ds.counts[6]}_ users have not further specified which country do they come from.',
                 unsafe_allow_html=True
         )
 
-        ### Book Data Part ###
+        #################
+        ### Book Part ###
+        #################
+        # analysing only the explicit part of the dataset
         row_61, _, row_63 = st.columns( (1, 0.1, 1) )
 
         row_61.header('Analyzing Book Info :open_book:')
@@ -410,10 +420,9 @@ def analysis(main_df, book_info, user_info):
         ax.set_ylabel('Book Rating')
         ax.grid(zorder=0,alpha=.2)
         row_71.pyplot(fig)
-        desc_stats = [main_df['book_rating'].mean(), main_df['book_rating'].median()]
         exp = row_71.expander('Book Ratings')
         exp.markdown(
-                f'On the scale from _1_ to _10_, the mean and the median book ratings are _{desc_stats[0].round(2)}_ and _{desc_stats[1]}_.',
+                f'On the scale from _1_ to _10_, the mean and the median book ratings are _{main_df.book_rating.mean().round(2)}_ and _{main_df.book_rating.median()}_.',
                 unsafe_allow_html=True
         )
 
@@ -421,19 +430,19 @@ def analysis(main_df, book_info, user_info):
         #         subset = 'isbn_unique', keep="first"
         #     )
         ds = book_info['publication_year'].astype(str).value_counts().reset_index()
-        ds.columns = ['value', 'count']
+        ds.columns = ['value', 'counts']
         row_73.subheader("Most Frequent Years of Publication")
         fig = Figure(figsize = (7,7))
         ax = fig.subplots()
         sns.barplot(
-                data = ds.head(20), x = 'count', y = 'value', ax=ax, palette='Reds_r'
+                data = ds.head(20), x = 'counts', y = 'value', ax=ax, palette='Reds_r'
             )
         ax.set_xlabel('Number of Books')
         ax.set_ylabel('Publication Year')
         ax.grid(zorder=0,alpha=.2)
         row_73.pyplot(fig)
-        num = ds['count'].head(20).sum()
-        year_percentage = ( num / ds['count'].sum() ) * 100
+        num = ds['counts'].head(20).sum()
+        year_percentage = ( num / ds['counts'].sum() ) * 100
         exp = row_73.expander('Publication Years')
         exp.markdown(
                 f'The oldest book in the database was published in _1806_, while the latest books were published in _2004_ . Around _{year_percentage.round(2)}_% of the books were published in _1985 or later_ .',
