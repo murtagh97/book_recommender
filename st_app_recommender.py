@@ -137,6 +137,21 @@ def book_recommendation(df, wide_df, model):
                 book_title,
                 index= int(index_lotr)
             )
+
+        ### add helper expander
+        book_author = df_unique['book_author'].unique()
+        index_jkr = np.where(book_author == 'J. K. Rowling')[0][0]
+        exp_help = row_21.expander('Search book by author:')
+        author_option = exp_help.selectbox(
+                '',
+                book_author,
+                index= int(index_jkr)
+            )
+        sub_df_author = df[ df['book_author'].str.lower() == author_option.lower() ].drop_duplicates(subset=['isbn_unique'], keep = 'first')
+        exp_help.write(
+            sub_df_author[['book_author', 'book_title']].reset_index(drop=True)
+        )
+
         row_21.subheader('Book Info')
 
         ### Row 3
@@ -280,8 +295,8 @@ def book_recommendation(df, wide_df, model):
                 This app offers a simple book recommendation engine built with the use of the <a href="http://www2.informatik.uni-freiburg.de/~cziegler/BX/" target="_blank">Book-Crossing Dataset</a>.
 
                 Individual app sections allow user to: 
-                * Select a book and create some recommendations.
-                * See data visualisation with exploratory data analysis of the underlying dataset.
+                * Select a book and create top 5 recommendations,
+                * See data visualisation with an exploratory data analysis of the dataset in question.
                 """,
                 unsafe_allow_html=True
             )
@@ -403,7 +418,7 @@ def analysis(main_df, book_info, user_info, user_rating_info):
         #################
         # analysing only the explicit part of the dataset
         # mean quantity analyses are already made on the filtered dataset
-        
+
         row_61, _, row_63 = st.columns( (1, 0.1, 1) )
 
         row_61.header('Analyzing Book Info :open_book:')
